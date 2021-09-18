@@ -1,11 +1,16 @@
+import { Box, Button, Flex, Heading, Input, Link } from '@chakra-ui/react'
 import { useState } from 'react'
-import { Box, Flex, Input, Heading, Button, Link } from '@chakra-ui/react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, Redirect, useHistory } from 'react-router-dom'
+import ErrorDialog from '../components/ErrorDialog'
+import { useFirebaseAuth } from '../hooks/useFirebaseAuth'
 
 export default function Login() {
+  const { signInInWithEmailAndPassword, authenticated } = useFirebaseAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const history = useHistory()
 
   const handleEmailChange = (event) => {
     const value = event.target.value
@@ -17,9 +22,31 @@ export default function Login() {
     setPassword(value)
   }
 
-  const loginUser = (e) => {
+  const loginUser = async (e) => {
     e.preventDefault()
     setLoading(true)
+    try {
+      await signInInWithEmailAndPassword(email, password)
+      history.push('/home')
+    } catch (err) {
+      if (err.code === 'auth/wrong-password') {
+        setErrorMessage('You have entered wrong password. Please try again!')
+      } else if (err.code === 'auth/user-not-found') {
+        setErrorMessage(
+          'The email you have provided is not registered yet. Create a new account and login. Thanks!'
+        )
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onCloseErrorDialog = () => {
+    setErrorMessage('')
+  }
+
+  if (authenticated) {
+    return <Redirect to='/home' />
   }
 
   return (
@@ -30,6 +57,7 @@ export default function Login() {
           <form onSubmit={loginUser}>
             <Box mt='5'>
               <Input
+                name='email'
                 type='email'
                 placeholder='Email'
                 variant='filled'
@@ -40,6 +68,7 @@ export default function Login() {
             </Box>
             <Box mt='5'>
               <Input
+                name='password'
                 type='password'
                 placeholder='Password'
                 variant='filled'
@@ -70,6 +99,9 @@ export default function Login() {
           </RouterLink>
         </Box>
       </Flex>
+      {errorMessage && (
+        <ErrorDialog errorMessage={errorMessage} onClose={onCloseErrorDialog} />
+      )}
     </Box>
   )
 }

@@ -1,15 +1,33 @@
-import { Box, Flex, Input, Heading, Button, Link } from '@chakra-ui/react'
-import { useEffect, useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Box, Button, Flex, Heading, Input, Link } from '@chakra-ui/react'
+import { useState } from 'react'
+import { Link as RouterLink, Redirect, useHistory } from 'react-router-dom'
+import ErrorDialog from '../components/ErrorDialog'
+import { useFirebaseAuth } from '../hooks/useFirebaseAuth'
 
 export default function Signup() {
+  const { signUpWithEmailAndPassword, authenticated } = useFirebaseAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const history = useHistory()
 
-  const signupUser = (e) => {
+  const signupUser = async (e) => {
     e.preventDefault()
     setLoading(true)
+    try {
+      await signUpWithEmailAndPassword(email, password)
+      history.push('/home')
+    } catch (err) {
+      console.log('You have got an error: ', err.code)
+      if (err.code === 'auth/email-already-in-use') {
+        setErrorMessage(
+          'Sorry, This Email is already in use with another account.'
+        )
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleEmailChange = (event) => {
@@ -20,6 +38,14 @@ export default function Signup() {
   const handlePasswordChange = (event) => {
     const value = event.target.value
     setPassword(value)
+  }
+
+  const onCloseErrorDialog = () => {
+    setErrorMessage('')
+  }
+
+  if (authenticated) {
+    return <Redirect to='/home' />
   }
 
   return (
@@ -72,6 +98,9 @@ export default function Signup() {
           </RouterLink>
         </Box>
       </Flex>
+      {errorMessage && (
+        <ErrorDialog errorMessage={errorMessage} onClose={onCloseErrorDialog} />
+      )}
     </Box>
   )
 }
