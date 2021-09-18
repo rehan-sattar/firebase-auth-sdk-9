@@ -69,8 +69,9 @@ export default function Signup() {
               <Input
                 name='password'
                 type='password'
-                placeholder='Password'
+                placeholder='Password (must be 6 characters long)'
                 variant='filled'
+                minLength='6'
                 required
                 value={password}
                 onChange={handlePasswordChange}
