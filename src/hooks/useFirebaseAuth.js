@@ -1,5 +1,5 @@
 import {
-  createUserWithEmailAndPassword as createUserWithEmailAndPassword_,
+  createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword as signInWithEmailAndPassword_,
@@ -23,11 +23,11 @@ export const useFirebaseAuth = () => {
         setUser(false)
       }
     })
-    return () => unsubscribe()
+    return unsubscribe
   }, [])
 
   const signUpWithEmailAndPassword = (email, password) => {
-    return createUserWithEmailAndPassword_(auth, email, password)
+    return createUserWithEmailAndPassword(auth, email, password)
   }
 
   const signInInWithEmailAndPassword = (email, password) => {
